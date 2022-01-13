@@ -1,46 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Blog from './components/Blog'
 import blogService from './services/blogs'
 import userService from './services/user'
-
-
-const CreateNewBlogWindow = ({addBlog}) => {
-  const [title, setTitle] = useState()
-  const [url, setUrl] = useState()
-  const [author, setAuthor] = useState()
-
-  const handleNewBlog = (e) => {
-    e.preventDefault()
-    let newBlog = {title: title, url: url, author: author}
-    console.log('posting blog:', newBlog);
-    blogService.postNewBlog(newBlog)
-    setTitle('')
-    setUrl('')
-    setAuthor('')
-    addBlog(newBlog)
-  }
-
-  return (
-    <>
-    <h2>create new</h2>
-    <form onSubmit={handleNewBlog}>
-    <div>
-      <label>title:</label>
-      <input type='text' value={title} onChange={({target}) => setTitle(target.value)}></input>
-    </div>
-    <div>
-      <label>author:</label>
-      <input type='text' value={author} onChange={({target}) => setAuthor(target.value)}></input>
-    </div>
-    <div>
-      <label>url:</label>
-      <input type='text' value={url} onChange={({target}) => setUrl(target.value)}></input>
-    </div>
-    <button type='submit'>submit</button>
-  </form>
-  </>
-  )
-}
+import CreateNewBlogWindow from './components/CreateNewBlogWindow'
+import Togglable from './components/Togglable'
+import userEvent from '@testing-library/user-event'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
@@ -49,7 +13,22 @@ const App = () => {
   const [password, setPassword] = useState('')
   const [notification, setNotification] = useState(null)
 
+  const blogFormRef = useRef()
+
+  
+  const sortBlogs = () => {
+  let sortedBlogs = [...blogs]
+  sortedBlogs.sort((a, b) => {
+    return b.likes < a.likes ?  -1
+         : b.likes > a.likes ? 1
+         : 0; 
+  });
+  setBlogs(sortedBlogs)
+  console.log('sorted blogs', sortedBlogs)
+  }
+
   const addNewBlogLocal = (newBlog) => {
+    blogFormRef.current.toggleVisibility()
     let newBlogs = [...blogs, newBlog]
     setBlogs(newBlogs)
     setNotification({
@@ -121,14 +100,24 @@ const App = () => {
     )
   }
 
+  const updateBlog = (idx, field, value) => {
+    const newBlog = [...blogs]
+    newBlog[idx][field] = value
+    setBlogs(newBlog)
+  }
+
   const BlogsList = () => {
     console.log(blogs)
     return (
       <div>
         <h2>blogs</h2>
         {
-        blogs.map(blog =>
-          <Blog key={blog.id} blog={blog} />
+        blogs.map((blog, idx) =>
+          <div key={Math.random()} style={{outline: "1px dashed black", margin: '4px'}}>
+            <Blog updateBlog={(field, value) => {
+              updateBlog(idx, field, value)
+            }} key={blog.id} blog={blog} ></Blog>
+          </div>
         )
         }
       </div>
@@ -148,8 +137,10 @@ const App = () => {
     return (
       <>
         <UserInfo></UserInfo>
-        <BlogsList></BlogsList>
-        <CreateNewBlogWindow addBlog={addNewBlogLocal}></CreateNewBlogWindow>
+        <Togglable ref={blogFormRef} closeButtonLabel='cancel' openButtonLabel='add new blog'>
+         <CreateNewBlogWindow addBlog={addNewBlogLocal}></CreateNewBlogWindow>
+        </Togglable>
+        <BlogsList/>    
       </>
     )
   }
@@ -170,6 +161,7 @@ const App = () => {
       const blogs = await blogService.getAll()
       console.log(blogs);
       setBlogs(blogs)
+      sortBlogs()
     }
     doStuff()
   }, [])
@@ -179,9 +171,6 @@ const App = () => {
       <Notification></Notification>
       {
         user ? LoggedInView() : LoginForm()
-      }
-      {
-        // user &&      
       }
     </div>
   )

@@ -18,4 +18,13 @@ const postNewBlog = async (content) => {
   return response.data
 }
 
-export default { getAll, setToken, postNewBlog }
+const patchBlog = async (id) => {
+  console.log('patchblog called with id', id);
+  const config = {
+    headers: { Authorization: token }
+  }
+  const response = await axios.patch(`${baseUrl}/${id}`, {likes: 0})
+  return response.data
+}
+
+export default { getAll, setToken, postNewBlog, patchBlog }
