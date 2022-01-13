@@ -1,5 +1,6 @@
 import React, {useState} from 'react'
 import blogService from '../services/blogs'
+import PropTypes from 'prop-types'
 
 const CreateNewBlogWindow = ({addBlog}) => {
     const [title, setTitle] = useState()
@@ -38,5 +39,9 @@ const CreateNewBlogWindow = ({addBlog}) => {
     </>
     )
   }
+
+CreateNewBlogWindow.propTypes = {
+  addBlog: PropTypes.func.isRequired
+}
 
 export default CreateNewBlogWindow
